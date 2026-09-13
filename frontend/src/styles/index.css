@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Light Mode: Intelligent Learning Studio Palette ── */
+    --bg-app: #F7F5FF;
+    --bg-surface: #FFFFFF;
+    --bg-surface-elevated: #F4F1FD;
+    
+    --text-primary: #171827;
+    --text-secondary: #65677A;
+    --text-muted: #9496A8;
+    
+    --border-subtle: #E5E2F0;
+    --border-hover: #D0CCE0;
+    --border-focus: #6C63FF;
+    
+    /* Primary brand purple & lavender */
+    --accent-primary: #6C63FF;
+    --accent-deep: #5146D8;
+    --accent-violet: #8B5CF6;
+    --accent-subtle: #EEE9FF;
+    --accent-text: #5146D8;
+    
+    /* Rich semantic accents */
+    --color-coral: #FF6B6B;
+    --color-coral-subtle: #FFEBEB;
+    --color-coral-text: #E03131;
+    
+    --color-gold: #F5B942;
+    --color-gold-subtle: #FEF7E8;
+    --color-gold-text: #B45309;
+    
+    --color-mint: #35C7A5;
+    --color-mint-subtle: #EBF9F5;
+    --color-mint-text: #0F766E;
+    
+    --color-sky: #4EA8DE;
+    --color-sky-subtle: #EDF6FC;
+    --color-sky-text: #0369A1;
+    
+    --color-pink: #F472B6;
+    --color-pink-subtle: #FDF0F6;
+    --color-pink-text: #BE185D;
+    
+    --shadow-studio: 0 2px 8px -2px rgba(23, 24, 39, 0.05), 0 1px 3px rgba(23, 24, 39, 0.03);
+    --shadow-card-hover: 0 12px 28px -6px rgba(108, 99, 255, 0.14), 0 4px 10px -2px rgba(23, 24, 39, 0.04);
+    --shadow-elevated: 0 10px 24px -4px rgba(23, 24, 39, 0.08);
+    --scrollbar-bg: #F7F5FF;
+    --scrollbar-thumb: #D0CCE0;
+  }
+
+  .dark {
+    /* ── Dark Mode: Rich Plum / Graphite Palette ── */
+    --bg-app: #121116;
+    --bg-surface: #1B1921;
+    --bg-surface-elevated: #24212C;
+    
+    --text-primary: #F7F5FF;
+    --text-secondary: #B7B2C5;
+    --text-muted: #7E798D;
+    
+    --border-subtle: #332E3D;
+    --border-hover: #4A4356;
+    --border-focus: #A78BFA;
+    
+    /* Primary purple */
+    --accent-primary: #A78BFA;
+    --accent-deep: #8B5CF6;
+    --accent-violet: #8B5CF6;
+    --accent-subtle: #2A2338;
+    --accent-text: #C4B5FD;
+    
+    /* Rich semantic accents */
+    --color-coral: #FB7185;
+    --color-coral-subtle: #381B23;
+    --color-coral-text: #FECDD3;
+    
+    --color-gold: #F4C95D;
+    --color-gold-subtle: #382F18;
+    --color-gold-text: #FDE68A;
+    
+    --color-mint: #4FD1B5;
+    --color-mint-subtle: #183830;
+    --color-mint-text: #A7F3D0;
+    
+    --color-sky: #60A5FA;
+    --color-sky-subtle: #1A2C46;
+    --color-sky-text: #BFDBFE;
+    
+    --color-pink: #F472B6;
+    --color-pink-subtle: #3A1E2F;
+    --color-pink-text: #FBCFE8;
+    
+    --shadow-studio: 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+    --shadow-card-hover: 0 10px 24px -6px rgba(167, 139, 250, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.3);
+    --shadow-elevated: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+    --scrollbar-bg: #121116;
+    --scrollbar-thumb: #332E3D;
+  }
+
+  body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer utilities {
+  .studio-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-studio);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .studio-card:hover {
+    border-color: var(--border-hover);
+  }
+
+  .studio-card-interactive {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-studio);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+  }
+
+  .studio-card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--accent-primary);
+  }
+
+  .studio-card-elevated {
+    background-color: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1.25rem;
+    transition: all 0.2s ease;
+  }
+
+  .studio-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  filter: brightness(0.85);
+}
