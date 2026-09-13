@@ -1,0 +1,31 @@
+{
+  "name": "mindtrace",
+  "version": "0.1.0",
+  "description": "MindTrace — AI Learning Diagnostic Engine",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces",
+    "build:backend": "npm run build --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "prisma:generate": "npm run prisma:generate --workspace=backend",
+    "prisma:push": "npm run prisma:push --workspace=backend",
+    "prisma:seed": "npm run prisma:seed --workspace=backend",
+    "lint": "npm run lint --workspaces"
+  },
+  "keywords": [
+    "mindtrace",
+    "ai",
+    "diagnostic",
+    "education",
+    "learning-xray"
+  ],
+  "author": "MindTrace Team",
+  "license": "MIT"
+}
