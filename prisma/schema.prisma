@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model User {
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  name               String
+  passwordHash       String              @default("")
+  role               UserRole            @default(STUDENT)
+  grade              Int                 @default(10)
+  board              String              @default("CBSE")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  learningContexts   LearningContext[]
+  selfAssessments    SelfAssessment[]
+  diagnosticSessions DiagnosticSession[]
+
+  @@map("users")
+}
+
+model LearningContext {
+  id           String           @id @default(uuid())
+  userId       String
+  classGrade   String           @default("10")
+  board        String           @default("CBSE")
+  subject      String           @default("Mathematics")
+  topicId      String           @default("topic_quadratic_equations")
+  learningGoal String           @default("Preparing for a test")
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selfAssessments SelfAssessment[]
+
+  @@map("learning_contexts")
+}
+
+model SelfAssessment {
+  id                String                   @id @default(uuid())
+  userId            String
+  learningContextId String
+  overallConfidence Int                      @default(3) // 1 to 5 scale
+  selectedMode      String                   @default("TEST") // "TEST" | "LEARN_FROM_SCRATCH"
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningContext LearningContext          @relation(fields: [learningContextId], references: [id], onDelete: Cascade)
+  subtopicRatings SubtopicSelfAssessment[]
+
+  @@map("self_assessments")
+}
+
+model SubtopicSelfAssessment {
+  id               String         @id @default(uuid())
+  selfAssessmentId String
+  subtopicId       String
+  rating           String         // "KNOW" | "PARTIAL" | "DONT_KNOW"
+  createdAt        DateTime       @default(now())
+
+  selfAssessment   SelfAssessment @relation(fields: [selfAssessmentId], references: [id], onDelete: Cascade)
+
+  @@unique([selfAssessmentId, subtopicId])
+  @@map("subtopic_self_assessments")
+}
+
+model Topic {
+  id                 String              @id @default(uuid())
+  slug               String              @unique
+  name               String
+  subject            String              @default("Mathematics")
+  grade              Int                 @default(10)
+  board              String              @default("CBSE")
+  description        String?
+  createdAt          DateTime            @default(now())
+  subtopics          Subtopic[]
+  diagnosticSessions DiagnosticSession[]
+
+  @@map("topics")
+}
+
+model Subtopic {
+  id          String     @id @default(uuid())
+  topicId     String
+  slug        String
+  title       String
+  orderIndex  Int
+  description String?
+  createdAt   DateTime   @default(now())
+  topic       Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions   Question[]
+
+  @@unique([topicId, slug])
+  @@map("subtopics")
+}
+
+model DiagnosticSession {
+  id             String            @id @default(uuid())
+  userId         String
+  topicId        String
+  mode           String            @default("TEST_WHAT_I_KNOW") // "TEST_WHAT_I_KNOW" | "LEARN_FROM_SCRATCH"
+  status         String            @default("ACTIVE") // "ACTIVE" | "COMPLETED" | "ABANDONED"
+  selfAssessment Json?             // records subtopic ratings: { subtopicId: "KNOW" | "PARTIAL" | "DONT_KNOW" }
+  overallScore   Float?
+  diagnosisSummary Json?           // Learning X-Ray snapshot
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic    Topic             @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  attempts QuestionAttempt[]
+
+  @@map("diagnostic_sessions")
+}
+
+model Question {
+  id             String            @id @default(uuid())
+  subtopicId     String
+  type           String            // "CONCEPT" | "PROCEDURAL" | "REASONING" | "TRANSFER" | "CONFIDENCE" | "EXPLAIN_BACK"
+  difficulty     String            @default("MEDIUM") // "EASY" | "MEDIUM" | "HARD"
+  prompt         String
+  options        Json?             // Array of choices if multiple choice
+  correctAnswer  String
+  explanation    String
+  prerequisites  String[]          @default([])
+  expectedSignals String[]         @default([])
+  createdAt      DateTime          @default(now())
+
+  subtopic Subtopic          @relation(fields: [subtopicId], references: [id], onDelete: Cascade)
+  attempts QuestionAttempt[]
+
+  @@map("questions")
+}
+
+model QuestionAttempt {
+  id                 String   @id @default(uuid())
+  sessionId          String
+  questionId         String
+  studentAnswer      String
+  studentExplanation String?  // Step-by-step reasoning or explain-back
+  confidenceRating   Int      @default(3) // 1 to 5 scale
+  isCorrect          Boolean
+  stepAnalysis       Json?    // Structured breakdown of steps
+  misconceptionAlert String?  // Flagged misconception if any
+  createdAt          DateTime @default(now())
+
+  session  DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_attempts")
+}
