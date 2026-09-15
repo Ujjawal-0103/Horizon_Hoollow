@@ -56,8 +56,8 @@ export const LearningXRayPage: React.FC = () => {
 
         {/* Overall Understanding Radial Gauge */}
         <div className="shrink-0 p-5 rounded-3xl bg-surface border border-border-subtle shadow-sm flex flex-col items-center justify-center min-w-[170px] text-center">
-          <ProgressRing percentage={76} size={100} strokeWidth={8} color="var(--accent-primary)" />
-          <div className="mt-2 text-xs font-extrabold text-primary">Overall Understanding</div>
+          <ProgressRing percentage={summary.overallScore ?? 76} size={100} strokeWidth={8} color="var(--accent-primary)" />
+          <div className="mt-2 text-xs font-extrabold text-primary">Overall Understanding ({summary.overallScore ?? 76}%)</div>
           <div className="text-[10px] text-secondary font-medium">Class 10 CBSE Math</div>
         </div>
       </div>

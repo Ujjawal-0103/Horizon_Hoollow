@@ -3,7 +3,8 @@ import { topicService } from '../services/topicService';
 
 export async function getAllTopicsHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const topics = await topicService.getAllTopics();
+    const subject = req.query.subject as string | undefined;
+    const topics = await topicService.getAllTopics(subject);
     res.json({
       success: true,
       data: topics

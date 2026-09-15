@@ -167,8 +167,9 @@ export const api = {
   },
 
   // Topics & Subtopics
-  async getAllTopics(): Promise<Topic[]> {
-    const res = await request<{ success: boolean; data: Topic[] }>('/topics');
+  async getAllTopics(subject?: string): Promise<Topic[]> {
+    const query = subject ? `?subject=${encodeURIComponent(subject)}` : '';
+    const res = await request<{ success: boolean; data: Topic[] }>(`/topics${query}`);
     return res.data;
   },
 

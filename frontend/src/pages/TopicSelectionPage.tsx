@@ -46,6 +46,7 @@ export const TopicSelectionPage: React.FC = () => {
   const [board, setBoard] = useState<string>(() => user?.board || 'CBSE');
   const [subject, setSubject] = useState<string>('Mathematics');
   const [topic, setTopic] = useState<Topic | null>(null);
+  const [availableTopics, setAvailableTopics] = useState<Topic[]>([]);
   const [subtopicsList, setSubtopicsList] = useState<Subtopic[]>([]);
   const [learningGoal, setLearningGoal] = useState<LearningGoal>('Preparing for a test');
   const [overallConfidence, setOverallConfidence] = useState<number>(4);
@@ -101,6 +102,38 @@ export const TopicSelectionPage: React.FC = () => {
     'Other'
   ];
 
+  // Fetch topics whenever active subject changes
+  const fetchTopicsForSubject = async (subj: string) => {
+    try {
+      const topics = await api.getAllTopics(subj);
+      setAvailableTopics(topics);
+      if (topics && topics.length > 0) {
+        const selected = topics[0];
+        setTopic(selected);
+        const subtopics = await api.getSubtopics(selected.id || selected.slug);
+        setSubtopicsList(subtopics);
+      } else {
+        setTopic(null);
+        setSubtopicsList([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch topics for subject:', err);
+      setAvailableTopics([]);
+      setTopic(null);
+      setSubtopicsList([]);
+    }
+  };
+
+  const handleSelectTopic = async (selectedTopic: Topic) => {
+    setTopic(selectedTopic);
+    try {
+      const subtopics = await api.getSubtopics(selectedTopic.id || selectedTopic.slug);
+      setSubtopicsList(subtopics);
+    } catch (err) {
+      console.error('Failed to fetch subtopics:', err);
+    }
+  };
+
   // Load subtopics from backend and restore active context
   useEffect(() => {
     const initializeFromBackend = async () => {
@@ -108,14 +141,7 @@ export const TopicSelectionPage: React.FC = () => {
       setErrorMessage(null);
 
       try {
-        // 1. Fetch available topic & subtopics directly from backend API
-        const topicData = await api.getTopic('quadratic-equations');
-        setTopic(topicData);
-
-        const subtopics = await api.getSubtopics(topicData.id || 'quadratic-equations');
-        setSubtopicsList(subtopics);
-
-        // 2. Try to restore persisted student context from backend for authenticated user
+        let currentSubject = subject;
         try {
           const activeContextRes = await api.getActiveLearningContext('me');
           if (activeContextRes && activeContextRes.data) {
@@ -123,17 +149,18 @@ export const TopicSelectionPage: React.FC = () => {
             setSavedContextId(ctx.id);
             if (ctx.classGrade) setClassGrade(ctx.classGrade);
             if (ctx.board) setBoard(ctx.board);
-            if (ctx.subject) setSubject(ctx.subject);
+            if (ctx.subject) {
+              setSubject(ctx.subject);
+              currentSubject = ctx.subject;
+            }
             if (ctx.learningGoal) setLearningGoal(ctx.learningGoal as LearningGoal);
 
-            // Hydrate self-assessment if present
             if (ctx.selfAssessments && ctx.selfAssessments.length > 0) {
               const sa = ctx.selfAssessments[0];
               setSavedAssessmentId(sa.id);
               if (sa.overallConfidence) setOverallConfidence(sa.overallConfidence);
               if (sa.selectedMode) setSelectedMode(sa.selectedMode);
 
-              // Hydrate subtopic ratings
               if (Array.isArray(sa.subtopicRatings) && sa.subtopicRatings.length > 0) {
                 const ratingsMap: Record<string, SubtopicConfidence> = {};
                 sa.subtopicRatings.forEach((item: any) => {
@@ -144,9 +171,10 @@ export const TopicSelectionPage: React.FC = () => {
             }
           }
         } catch (ctxErr) {
-          // No active context found yet, continue with fresh state
           console.info('Starting fresh or unpersisted context:', ctxErr);
         }
+
+        await fetchTopicsForSubject(currentSubject);
       } catch (err: any) {
         console.error('Failed to load topic from backend:', err);
         setErrorMessage('Could not connect to backend to fetch curriculum. Please verify server is active.');
@@ -473,7 +501,10 @@ export const TopicSelectionPage: React.FC = () => {
                 <button
                   key={subj.name}
                   type="button"
-                  onClick={() => setSubject(subj.name)}
+                  onClick={() => {
+                    setSubject(subj.name);
+                    fetchTopicsForSubject(subj.name);
+                  }}
                   className={`p-5 rounded-2xl text-left border transition-all flex items-center justify-between ${
                     isSelected
                       ? 'bg-accent-subtle/50 border-2 border-accent text-accent-text shadow-sm'
@@ -524,7 +555,7 @@ export const TopicSelectionPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── STEP 3: Current Topic (Fetched from Backend) ─────────────── */}
+      {/* ── STEP 3: Current Topic (Fetched from Backend for Subject) ── */}
       {currentStep === 3 && (
         <div className="studio-card p-6 sm:p-10 border border-border-subtle space-y-8 animate-fadeIn">
           <div className="space-y-2 text-center">
@@ -532,41 +563,83 @@ export const TopicSelectionPage: React.FC = () => {
               Curriculum Calibration
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
-              What are you learning right now?
+              Select your chapter for {subject}
             </h1>
             <p className="text-xs sm:text-sm text-secondary max-w-md mx-auto">
-              Dynamic topic loaded from backend database.
+              Select a chapter from the {subject} curriculum database to calibrate your diagnostic studio.
             </p>
           </div>
 
-          {/* Selected Topic Visual Card */}
-          <div className="studio-card p-6 border-2 border-accent/40 bg-gradient-to-b from-surface to-accent-subtle/30 space-y-4 shadow-sm">
-            <div className="flex items-start justify-between">
+          {availableTopics.length > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                {availableTopics.map((top) => {
+                  const isSelected = topic?.id === top.id || topic?.slug === top.slug;
+                  return (
+                    <div
+                      key={top.id || top.slug}
+                      onClick={() => handleSelectTopic(top)}
+                      className={`cursor-pointer studio-card p-6 border-2 transition-all space-y-3 ${
+                        isSelected
+                          ? 'border-accent bg-gradient-to-b from-surface to-accent-subtle/30 shadow-sm'
+                          : 'border-border-subtle bg-surface-elevated hover:border-accent/40'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-extrabold uppercase tracking-widest text-accent">
+                            Class {classGrade} • {board} • {top.subject || subject}
+                          </span>
+                          <h2 className="text-xl sm:text-2xl font-extrabold text-primary">
+                            {top.name}
+                          </h2>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                          isSelected ? 'bg-mint text-white' : 'bg-surface text-secondary border border-border-subtle'
+                        }`}>
+                          {isSelected ? 'Selected Chapter' : 'Select Chapter'}
+                        </span>
+                      </div>
+
+                      {top.description && (
+                        <p className="text-xs sm:text-sm text-secondary leading-relaxed">
+                          {top.description}
+                        </p>
+                      )}
+
+                      <div className="p-3.5 rounded-2xl bg-surface border border-border-subtle flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 font-bold text-primary">
+                          <BookOpen className="w-4 h-4 text-accent" />
+                          <span>{isSelected ? subtopicsList.length : top.subtopics?.length || 7} Subtopics</span>
+                        </div>
+                        <span className="text-muted font-mono">ID: {top.slug}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-coral-subtle/20 border border-coral/30 space-y-4 text-center">
+              <AlertCircle className="w-8 h-8 text-coral mx-auto" />
               <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-accent">
-                  Class {classGrade} • {board} • {subject}
-                </span>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-primary">
-                  {topic?.name || 'Quadratic Equations'}
-                </h2>
+                <h3 className="text-lg font-extrabold text-primary">No Chapters Seeded for {subject}</h3>
+                <p className="text-xs text-secondary max-w-md mx-auto">
+                  There are no chapters for {subject} in the current database. MindTrace is actively live for <strong>Mathematics</strong> (Quadratic Equations).
+                </p>
               </div>
-              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-mint text-white">
-                Full Diagnostic Ready
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubject('Mathematics');
+                  fetchTopicsForSubject('Mathematics');
+                }}
+                className="px-5 py-2.5 rounded-xl bg-accent text-white font-extrabold text-xs shadow-sm"
+              >
+                Switch to Mathematics & View Chapters
+              </button>
             </div>
-
-            <p className="text-xs sm:text-sm text-secondary leading-relaxed">
-              {topic?.description || 'Second-degree equations, factoring, quadratic formula, discriminant, and parabolic modeling.'}
-            </p>
-
-            <div className="p-4 rounded-2xl bg-surface border border-border-subtle flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 font-bold text-primary">
-                <BookOpen className="w-4 h-4 text-accent" />
-                <span>{subtopicsList.length} Seeded Subtopics</span>
-              </div>
-              <span className="text-muted font-mono">Curriculum ID: {topic?.slug || 'quadratic-equations'}</span>
-            </div>
-          </div>
+          )}
 
           {/* Navigation */}
           <div className="pt-4 flex items-center justify-between border-t border-border-subtle">
@@ -581,8 +654,9 @@ export const TopicSelectionPage: React.FC = () => {
 
             <button
               type="button"
+              disabled={!topic}
               onClick={handleNextStep}
-              className="py-3.5 px-7 rounded-2xl font-extrabold text-sm bg-accent hover:bg-accent-deep text-white shadow-sm transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
+              className="py-3.5 px-7 rounded-2xl font-extrabold text-sm bg-accent hover:bg-accent-deep text-white shadow-sm transition-all flex items-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-40"
             >
               <span>Continue to Goal</span>
               <ArrowRight className="w-4 h-4" />

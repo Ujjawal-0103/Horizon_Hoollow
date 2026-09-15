@@ -83,9 +83,11 @@ export class TopicService {
     return null;
   }
 
-  async getAllTopics() {
+  async getAllTopics(subject?: string) {
     try {
+      const where = subject ? { subject: { equals: subject, mode: 'insensitive' as const } } : {};
       const topics = await prisma.topic.findMany({
+        where,
         include: {
           subtopics: {
             orderBy: { orderIndex: 'asc' }
@@ -96,7 +98,10 @@ export class TopicService {
     } catch (err) {
       console.warn('[TopicService] DB lookup for all topics failed, returning fallback domain:', err);
     }
-    return [FALLBACK_QUADRATIC_TOPIC];
+    if (!subject || subject.toLowerCase() === 'mathematics') {
+      return [FALLBACK_QUADRATIC_TOPIC];
+    }
+    return [];
   }
 
   async getSubtopics(topicIdOrSlug: string) {

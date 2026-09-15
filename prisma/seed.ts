@@ -95,11 +95,13 @@ async function main() {
 
   // 3. Seed Initial Diagnostic Questions (Multi-Signal)
   const standardFormSubtopic = subtopics.find(s => s.slug === 'standard-form')!;
+  const factorizationSubtopic = subtopics.find(s => s.slug === 'solving-factorization')!;
   const discriminantSubtopic = subtopics.find(s => s.slug === 'discriminant')!;
   const natureRootsSubtopic = subtopics.find(s => s.slug === 'nature-of-roots')!;
 
   const sampleQuestions = [
     {
+      id: 'q_standard_form_1',
       subtopicId: standardFormSubtopic.id,
       type: 'CONCEPT',
       difficulty: 'EASY',
@@ -116,6 +118,7 @@ async function main() {
       expectedSignals: ['Identifies cancellation of x² term', 'Checks degree after full expansion']
     },
     {
+      id: 'q_discriminant_1',
       subtopicId: discriminantSubtopic.id,
       type: 'PROCEDURAL',
       difficulty: 'MEDIUM',
@@ -132,9 +135,44 @@ async function main() {
       expectedSignals: ['Handles negative sign squaring correctly', 'Correct multiplication of 4ac']
     },
     {
+      id: 'q_nature_roots_1',
       subtopicId: natureRootsSubtopic.id,
       type: 'REASONING',
       difficulty: 'MEDIUM',
+      prompt: 'Why does the quadratic equation x² + 2x + 5 = 0 have no real roots?',
+      options: [
+        'Because the discriminant D = -16, which is less than 0',
+        'Because the coefficient a = 1 is positive',
+        'Because b² = 4 is less than c = 5',
+        'Because x cannot be negative'
+      ],
+      correctAnswer: 'Because the discriminant D = -16, which is less than 0',
+      explanation: 'D = 2² - 4(1)(5) = 4 - 20 = -16. Since D < 0, the square root of D is not a real number, so there are no real roots.',
+      prerequisites: ['Discriminant formula', 'Square root of negative numbers'],
+      expectedSignals: ['Evaluates D < 0 condition', 'Connects negative discriminant to non-real roots']
+    },
+    {
+      id: 'q_explain_back_1',
+      subtopicId: factorizationSubtopic.id,
+      type: 'EXPLAIN_BACK',
+      difficulty: 'MEDIUM',
+      prompt: 'In your own words, explain why setting (x - 3)(x + 5) = 0 allows us to conclude that x = 3 or x = -5.',
+      options: [
+        'Zero Product Property: If the product of two real numbers is 0, at least one of the factors must be 0',
+        'Combining like terms requires setting x to positive and negative values',
+        'Quadratic equations always have opposite signs for their roots',
+        'The discriminant D is equal to 0 for factored polynomials'
+      ],
+      correctAnswer: 'Zero Product Property: If the product of two real numbers is 0, at least one of the factors must be 0',
+      explanation: 'If A * B = 0, then either A = 0 or B = 0. So x - 3 = 0 => x = 3, or x + 5 = 0 => x = -5.',
+      prerequisites: ['Zero product property', 'Linear equation solving'],
+      expectedSignals: ['Identifies Zero Product Property', 'Explains factor breakdown']
+    },
+    {
+      id: 'q_transfer_k_1',
+      subtopicId: natureRootsSubtopic.id,
+      type: 'TRANSFER',
+      difficulty: 'HARD',
       prompt: 'If the quadratic equation kx² - 6x + 1 = 0 has two distinct real roots, what is the exact condition for k?',
       options: [
         'k < 9 and k ≠ 0',
@@ -157,6 +195,7 @@ async function main() {
     if (!existing) {
       await prisma.question.create({
         data: {
+          id: q.id,
           subtopicId: q.subtopicId,
           type: q.type,
           difficulty: q.difficulty,
