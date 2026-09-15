@@ -15,6 +15,7 @@ import {
   Lightbulb,
   Play
 } from 'lucide-react';
+import { MathText } from '../components/common/MathText';
 
 /* ── Section 21 & 22: Interactive Studio Teaching & Explain-Back ──── */
 export const InterventionPage: React.FC = () => {
@@ -42,7 +43,7 @@ export const InterventionPage: React.FC = () => {
           Targeted Concept Reconstruction
         </h1>
         <p className="text-xs sm:text-sm text-secondary">
-          Focusing strictly on why leading coefficient $a \neq 0$ is required in Quadratic Equations.
+          Focusing strictly on why leading coefficient <MathText text="a \neq 0" /> is required in Quadratic Equations.
         </p>
       </div>
 
@@ -76,13 +77,13 @@ export const InterventionPage: React.FC = () => {
               Stage 01: Core Concept
             </span>
             <h3 className="text-xl font-extrabold text-primary">
-              The Fundamental Definition: Why $a \neq 0$?
+              The Fundamental Definition: Why <MathText text="a \neq 0" />?
             </h3>
             <p className="text-sm text-secondary leading-relaxed font-medium">
-              A quadratic equation is defined as $ax^2 + bx + c = 0$ with degree 2. If $a = 0$, the $x^2$ term completely vanishes, collapsing the equation into $bx + c = 0$—a linear equation with only 1 root!
+              A quadratic equation is defined as <MathText text="ax^2 + bx + c = 0" /> with degree 2. If <MathText text="a = 0" />, the <MathText text="x^2" /> term completely vanishes, collapsing the equation into <MathText text="bx + c = 0" />—a linear equation with only 1 root!
             </p>
             <div className="p-4 rounded-2xl bg-surface-elevated border border-border-subtle text-xs text-primary font-bold">
-              Rule: Whenever you see a parameter multiplying $x^2$, set that parameter $\neq 0$ before applying discriminant formulas!
+              Rule: Whenever you see a parameter multiplying <MathText text="x^2" />, set that parameter <MathText text="\neq 0" /> before applying discriminant formulas!
             </div>
           </div>
         )}
@@ -97,13 +98,13 @@ export const InterventionPage: React.FC = () => {
               Let's Walk Through A Parameter Case
             </h3>
             <p className="text-xs sm:text-sm text-secondary">
-              Find $k$ such that $kx^2 - 6x + 1 = 0$ has two distinct real roots:
+              Find k such that <MathText text="kx^2 - 6x + 1 = 0" /> has two distinct real roots:
             </p>
             <div className="p-5 rounded-2xl bg-surface-elevated border border-border-subtle font-mono text-xs space-y-2 text-primary">
-              <div>1. $D = (-6)^2 - 4(k)(1) = 36 - 4k$</div>
-              <div>2. For two distinct roots: $D &gt; 0 \Rightarrow 36 &gt; 4k \Rightarrow k &lt; 9$</div>
-              <div className="text-accent font-bold">3. Essential condition: Coefficient of $x^2$ is $k$, so $k \neq 0$</div>
-              <div className="text-mint-text font-extrabold">Final: $k &lt; 9$ and $k \neq 0$</div>
+              <div>1. <MathText text="D = (-6)^2 - 4(k)(1) = 36 - 4k" /></div>
+              <div>2. For two distinct roots: <MathText text="D > 0 \Rightarrow 36 > 4k \Rightarrow k < 9" /></div>
+              <div className="text-accent font-bold">3. Essential condition: Coefficient of <MathText text="x^2" /> is k, so <MathText text="k \neq 0" /></div>
+              <div className="text-mint-text font-extrabold">Final: <MathText text="k < 9" /> and <MathText text="k \neq 0" /></div>
             </div>
           </div>
         )}
@@ -118,10 +119,10 @@ export const InterventionPage: React.FC = () => {
               Test Your Eye
             </h3>
             <p className="text-xs sm:text-sm text-secondary">
-              For what value of $m$ does $(m - 4)x^2 + 8x + 2 = 0$ cease to be quadratic?
+              For what value of m does <MathText text="(m - 4)x^2 + 8x + 2 = 0" /> cease to be quadratic?
             </p>
             <div className="p-4 rounded-2xl bg-surface-elevated border border-border-subtle text-xs font-bold text-primary">
-              Solution: When $m - 4 = 0 \Rightarrow m = 4$.
+              Solution: When <MathText text="m - 4 = 0 \Rightarrow m = 4" />.
             </div>
           </div>
         )}
@@ -137,7 +138,7 @@ export const InterventionPage: React.FC = () => {
                 Teach it back to me.
               </h3>
               <p className="text-xs sm:text-sm text-secondary">
-                Explain this as if you're helping a classmate understand why $(p - 3)x^2 + 4x + 2 = 0$ needs $p \neq 3$.
+                Explain this as if you're helping a classmate understand why <MathText text="(p - 3)x^2 + 4x + 2 = 0" /> needs <MathText text="p \neq 3" />.
               </p>
             </div>
 
@@ -168,7 +169,7 @@ export const InterventionPage: React.FC = () => {
                     What you understand
                   </div>
                   <p className="text-xs text-secondary leading-relaxed">
-                    You accurately identified that $p = 3$ reduces the leading coefficient to zero, eliminating degree 2.
+                    You accurately identified that <MathText text="p = 3" /> reduces the leading coefficient to zero, eliminating degree 2.
                   </p>
                 </div>
 
@@ -262,7 +263,7 @@ export const ReassessmentPage: React.FC = () => {
           </div>
 
           <h3 className="text-base sm:text-lg font-extrabold text-primary leading-relaxed">
-            For what values of parameter $c$ does the equation $(c - 1)x^2 + 6x + 3 = 0$ possess two distinct real roots?
+            For what values of parameter c does the equation <MathText text="(c - 1)x^2 + 6x + 3 = 0" /> possess two distinct real roots?
           </h3>
 
           <div className="space-y-3 pt-1">
@@ -282,7 +283,7 @@ export const ReassessmentPage: React.FC = () => {
                     : 'bg-surface border-border-subtle text-primary hover:bg-surface-elevated'
                 }`}
               >
-                <span>{opt}</span>
+                <span><MathText text={opt} /></span>
                 {chosenOption === opt && <Check className="w-4 h-4 text-accent" />}
               </button>
             ))}
@@ -314,7 +315,7 @@ export const ReassessmentPage: React.FC = () => {
                 Meaningful Improvement
               </h2>
               <p className="text-xs sm:text-sm text-secondary max-w-md mx-auto">
-                Your transfer gap improved. You successfully included the non-zero leading constraint ($c \neq 1$) on your very first try!
+                Your transfer gap improved. You successfully included the non-zero leading constraint (<MathText text="c \neq 1" />) on your very first try!
               </p>
             </div>
 

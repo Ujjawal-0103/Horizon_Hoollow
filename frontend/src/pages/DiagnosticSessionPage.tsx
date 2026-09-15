@@ -27,6 +27,7 @@ export const DiagnosticSessionPage: React.FC = () => {
   const [confidenceRating, setConfidenceRating] = useState<number>(3);
   const [showWhyModal, setShowWhyModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [evalPhase, setEvalPhase] = useState<number>(0);
   const [evaluation, setEvaluation] = useState<DiagnosticEvaluation | null>(null);
   const [summary, setSummary] = useState<DiagnosisSummary | null>(null);
@@ -68,23 +69,7 @@ export const DiagnosticSessionPage: React.FC = () => {
             '(x + 2)³ = x³ - 4'
           ],
           correctAnswer: 'x(x + 1) + 8 = (x + 2)(x - 2)',
-          explanation: 'Expanding both sides: x² + x + 8 = x² - 4. Subtracting x² leaves x + 12 = 0, which is degree 1 (linear), not 2.'
-        },
-        {
-          id: 'q_nature_roots_1',
-          subtopicId: 'sub_5',
-          subtopicTitle: 'Nature of Roots',
-          type: 'TRANSFER',
-          difficulty: 'MEDIUM',
-          prompt: 'If the quadratic equation kx² - 6x + 1 = 0 has two distinct real roots, what is the exact condition for parameter k?',
-          options: [
-            'k < 9 and k ≠ 0',
-            'k > 9',
-            'k ≤ 9 and k ≠ 0',
-            'k < 36'
-          ],
-          correctAnswer: 'k < 9 and k ≠ 0',
-          explanation: 'For distinct real roots, D = 36 - 4k > 0 => k < 9. For the equation to remain quadratic, the leading coefficient a = k cannot be 0.'
+          explanation: 'Expanding both sides: x² + x + 8 = x² - 4. Subtracting x² leaves x + 12 = 0, which has degree 1 (linear), not 2.'
         },
         {
           id: 'q_discriminant_1',
@@ -92,7 +77,7 @@ export const DiagnosticSessionPage: React.FC = () => {
           subtopicTitle: 'Discriminant (D = b² - 4ac)',
           type: 'PROCEDURAL',
           difficulty: 'MEDIUM',
-          prompt: 'What is the discriminant of the quadratic equation 2x² - 4x + 3 = 0?',
+          prompt: 'Calculate the discriminant (D) of the equation 2x² - 4x + 3 = 0.',
           options: [
             'D = -8',
             'D = 8',
@@ -101,6 +86,54 @@ export const DiagnosticSessionPage: React.FC = () => {
           ],
           correctAnswer: 'D = -8',
           explanation: 'a = 2, b = -4, c = 3. Discriminant D = b² - 4ac = (-4)² - 4(2)(3) = 16 - 24 = -8.'
+        },
+        {
+          id: 'q_nature_roots_1',
+          subtopicId: 'sub_5',
+          subtopicTitle: 'Nature of Roots',
+          type: 'REASONING',
+          difficulty: 'MEDIUM',
+          prompt: 'Why does the quadratic equation x² + 2x + 5 = 0 have no real roots?',
+          options: [
+            'Because the discriminant D = -16, which is less than 0',
+            'Because the coefficient a = 1 is positive',
+            'Because b² = 4 is less than c = 5',
+            'Because x cannot be negative'
+          ],
+          correctAnswer: 'Because the discriminant D = -16, which is less than 0',
+          explanation: 'D = 2² - 4(1)(5) = 4 - 20 = -16. Since D < 0, the square root of D is not a real number, so there are no real roots.'
+        },
+        {
+          id: 'q_explain_back_1',
+          subtopicId: 'sub_2',
+          subtopicTitle: 'Solving by Factorization',
+          type: 'EXPLAIN_BACK',
+          difficulty: 'MEDIUM',
+          prompt: 'In your own words, explain why setting (x - 3)(x + 5) = 0 allows us to conclude that x = 3 or x = -5.',
+          options: [
+            'Zero Product Property: If the product of two real numbers is 0, at least one of the factors must be 0',
+            'Combining like terms requires setting x to positive and negative values',
+            'Quadratic equations always have opposite signs for their roots',
+            'The discriminant D is equal to 0 for factored polynomials'
+          ],
+          correctAnswer: 'Zero Product Property: If the product of two real numbers is 0, at least one of the factors must be 0',
+          explanation: 'If A * B = 0, then either A = 0 or B = 0. So x - 3 = 0 => x = 3, or x + 5 = 0 => x = -5.'
+        },
+        {
+          id: 'q_transfer_k_1',
+          subtopicId: 'sub_5',
+          subtopicTitle: 'Nature of Roots',
+          type: 'TRANSFER',
+          difficulty: 'HARD',
+          prompt: 'If kx² - 6x + 1 = 0 has two distinct real roots, what is the complete condition for k?',
+          options: [
+            'k < 9 and k ≠ 0',
+            'k > 9',
+            'k ≤ 9 and k ≠ 0',
+            'k < 36'
+          ],
+          correctAnswer: 'k < 9 and k ≠ 0',
+          explanation: 'For distinct real roots, D = 36 - 4k > 0 => k < 9. For the equation to remain quadratic, the leading coefficient a = k cannot be 0.'
         }
       ]);
       setLoading(false);
@@ -130,6 +163,18 @@ export const DiagnosticSessionPage: React.FC = () => {
           title: 'Procedural Application',
           desc: 'This measures arithmetic accuracy, formula substitution, and sign management precision.',
           badgeColor: 'bg-sky-subtle text-sky-text border-sky/30'
+        };
+      case 'EXPLAIN_BACK':
+        return {
+          title: 'Explain-Back Verification',
+          desc: 'This evaluates your ability to articulate the underlying mathematical principle in your own words.',
+          badgeColor: 'bg-gold-subtle text-gold-text border-gold/30'
+        };
+      case 'CONFIDENCE':
+        return {
+          title: 'Self-Efficacy & Calibration',
+          desc: 'This checks your metacognitive awareness and calibration between perceived and actual mastery.',
+          badgeColor: 'bg-purple-subtle text-purple-text border-purple/30'
         };
       default:
         return {
@@ -168,6 +213,7 @@ export const DiagnosticSessionPage: React.FC = () => {
           setSummary(res.data.diagnosisSummary);
         }
         setIsSubmitting(false);
+        setIsSubmitted(true);
       }, 1500);
 
     } catch (err) {
@@ -208,6 +254,7 @@ export const DiagnosticSessionPage: React.FC = () => {
           recommendedAction: isCorrect ? 'test_transfer' : 'targeted_intervention'
         });
         setIsSubmitting(false);
+        setIsSubmitted(true);
       }, 1500);
     }
   };
@@ -219,6 +266,7 @@ export const DiagnosticSessionPage: React.FC = () => {
       setStudentExplanation('');
       setConfidenceRating(3);
       setEvaluation(null);
+      setIsSubmitted(false);
     } else {
       navigate('/learning-xray', { state: { summary, sessionId } });
     }
@@ -296,13 +344,13 @@ export const DiagnosticSessionPage: React.FC = () => {
               <button
                 key={idx}
                 type="button"
-                disabled={!!evaluation || isSubmitting}
+                disabled={isSubmitted || isSubmitting}
                 onClick={() => setSelectedAnswer(option)}
                 className={`w-full p-4 rounded-2xl text-left text-xs sm:text-sm font-bold transition-all flex items-center justify-between ${
                   isSelected
                     ? 'bg-accent-subtle border-2 border-accent text-primary shadow-sm scale-[1.01]'
                     : 'bg-surface border border-border-subtle text-primary hover:border-accent/40 hover:bg-surface-elevated'
-                } ${evaluation ? 'cursor-default' : ''}`}
+                } ${isSubmitted ? 'cursor-default' : ''}`}
               >
                 <div className="flex items-center gap-3.5">
                   <span className={`w-7 h-7 rounded-xl text-xs font-mono font-bold flex items-center justify-center transition-colors ${
@@ -319,7 +367,7 @@ export const DiagnosticSessionPage: React.FC = () => {
         </div>
 
         {/* Multi-Signal Inputs (Only active before submission) */}
-        {!evaluation && !isSubmitting && (
+        {!isSubmitted && !isSubmitting && (
           <div className="pt-4 border-t border-border-subtle space-y-5">
             
             {/* Step-by-Step Reasoning Editor (Section 14) */}
@@ -417,13 +465,14 @@ export const DiagnosticSessionPage: React.FC = () => {
 
       </div>
 
-      {/* ── Diagnostic Result Card (Appears after evaluation) ────────── */}
-      {evaluation && (
-        <div className={`studio-card p-6 border-2 space-y-5 ${
+      {/* ── Diagnostic Evaluation Feedback Card (Displays actual API evaluation payload) ────────── */}
+      {isSubmitted && evaluation && !isSubmitting && (
+        <div className={`studio-card p-6 border-2 space-y-5 animate-fadeIn ${
           evaluation.isCorrect
             ? 'border-mint/40 bg-mint-subtle/20'
             : 'border-coral/40 bg-coral-subtle/20'
         }`}>
+          {/* Header: Correct / Incorrect & Score */}
           <div className="flex items-start justify-between gap-3 border-b border-border-subtle pb-4">
             <div className="flex items-center gap-3">
               {evaluation.isCorrect ? (
@@ -433,10 +482,10 @@ export const DiagnosticSessionPage: React.FC = () => {
               )}
               <div>
                 <h3 className="text-sm sm:text-base font-extrabold text-primary">
-                  {evaluation.isCorrect ? 'Correct Conceptual Application' : 'Diagnosed Cognitive Discrepancy'}
+                  {evaluation.isCorrect ? 'Correct Answer' : 'Incorrect Answer'}
                 </h3>
                 <p className="text-xs text-secondary mt-0.5">
-                  Confidence Calibration: <strong className="capitalize text-primary font-bold">{evaluation.confidenceCalibration.replace('_', ' ')}</strong>
+                  Confidence Calibration: <strong className="capitalize text-primary font-bold">{evaluation.confidenceCalibration ? evaluation.confidenceCalibration.replace('_', ' ') : 'Uncertain'}</strong>
                 </p>
               </div>
             </div>
@@ -445,42 +494,72 @@ export const DiagnosticSessionPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Step Analysis */}
-          <div className="space-y-2">
-            <span className="text-xs font-extrabold text-secondary uppercase tracking-wider flex items-center gap-1.5">
-              <Brain className="w-3.5 h-3.5 text-accent" /> Step-by-Step Reasoning Evidence
-            </span>
-            <div className="space-y-2">
-              {evaluation.stepAnalysis?.map((step) => (
-                <div
-                  key={step.step}
-                  className="p-3.5 rounded-xl bg-surface border border-border-subtle text-xs space-y-1"
-                >
-                  <div className="flex items-center justify-between font-bold">
-                    <span className="text-primary">Step {step.step}</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] uppercase ${
-                      step.status === 'correct'
-                        ? 'bg-mint text-white'
-                        : 'bg-coral text-white'
-                    }`}>
-                      {step.status}
-                    </span>
-                  </div>
-                  <p className="text-secondary leading-relaxed">{step.evidence}</p>
-                </div>
-              ))}
+          {/* Recommended Action Badge */}
+          {evaluation.recommendedAction && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-extrabold text-secondary uppercase tracking-wider">Recommended Action:</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-accent-subtle text-accent-text border border-accent/30">
+                {evaluation.recommendedAction.replace('_', ' ')}
+              </span>
             </div>
-          </div>
+          )}
 
-          {/* Misconception Alert if flagged */}
-          {evaluation.misconceptionSignals && evaluation.misconceptionSignals.length > 0 && (
-            <div className="p-4 rounded-xl bg-coral-subtle border border-coral/30 space-y-1 text-xs">
-              <div className="font-bold text-coral-text flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5" /> Misconception Flagged
+          {/* Step Analysis */}
+          {evaluation.stepAnalysis && evaluation.stepAnalysis.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs font-extrabold text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                <Brain className="w-3.5 h-3.5 text-accent" /> Step Analysis
+              </span>
+              <div className="space-y-2">
+                {evaluation.stepAnalysis.map((step) => (
+                  <div
+                    key={step.step}
+                    className="p-3.5 rounded-xl bg-surface border border-border-subtle text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between font-bold">
+                      <span className="text-primary">Step {step.step}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] uppercase ${
+                        step.status === 'correct'
+                          ? 'bg-mint text-white'
+                          : step.status === 'partially_correct'
+                          ? 'bg-gold text-white'
+                          : 'bg-coral text-white'
+                      }`}>
+                        {step.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-secondary leading-relaxed">{step.evidence}</p>
+                  </div>
+                ))}
               </div>
-              {evaluation.misconceptionSignals.map((m, i) => (
-                <p key={i} className="text-coral-text leading-relaxed">{m}</p>
-              ))}
+            </div>
+          )}
+
+          {/* Reasoning Signals */}
+          {evaluation.reasoningSignals && evaluation.reasoningSignals.length > 0 && (
+            <div className="space-y-1.5 p-3.5 rounded-xl bg-surface border border-border-subtle text-xs">
+              <span className="font-bold text-mint-text flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-mint" /> Reasoning Signals Detected
+              </span>
+              <ul className="space-y-1 pl-4 text-secondary font-medium">
+                {evaluation.reasoningSignals.map((sig, idx) => (
+                  <li key={idx} className="list-disc">{sig}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Misconception Signals (if present) */}
+          {evaluation.misconceptionSignals && evaluation.misconceptionSignals.length > 0 && (
+            <div className="p-4 rounded-xl bg-coral-subtle border border-coral/30 space-y-1.5 text-xs">
+              <div className="font-bold text-coral-text flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-coral" /> Misconception Signals Detected
+              </div>
+              <ul className="space-y-1 pl-4 text-coral-text font-medium">
+                {evaluation.misconceptionSignals.map((m, i) => (
+                  <li key={i} className="list-disc">{m}</li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -489,13 +568,12 @@ export const DiagnosticSessionPage: React.FC = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm bg-accent hover:bg-accent-deep text-white shadow-sm transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm bg-accent hover:bg-accent-deep text-white shadow-sm transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
             >
               <span>{currentIndex < questions.length - 1 ? 'Proceed to Next Question' : 'Complete Session & View Learning X-Ray'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-
         </div>
       )}
 
