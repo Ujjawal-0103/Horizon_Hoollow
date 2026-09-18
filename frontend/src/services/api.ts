@@ -251,5 +251,19 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     });
+  },
+
+  // Sprint 5: Dedicated Analyze Endpoint
+  async analyzeDiagnosticSession(payload: {
+    sessionId?: string;
+    topicSlug?: string;
+    selfAssessment?: Record<string, SubtopicConfidence>;
+    attempts?: any[];
+  }) {
+    const res = await request<{ success: boolean; data: any }>('/diagnostic/analyze', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return res.data;
   }
 };

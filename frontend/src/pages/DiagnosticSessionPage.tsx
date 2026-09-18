@@ -220,7 +220,7 @@ export const DiagnosticSessionPage: React.FC = () => {
       console.warn('Using deterministic AI fallback evaluation:', err);
       const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
       setTimeout(() => {
-        setEvaluation({
+        const evalResult: DiagnosticEvaluation = {
           isCorrect,
           score: isCorrect ? 100 : 35,
           stepAnalysis: [
@@ -252,7 +252,73 @@ export const DiagnosticSessionPage: React.FC = () => {
             : 'well_calibrated',
           rootCause: isCorrect ? undefined : 'Superficial visual identification without algebraic reduction.',
           recommendedAction: isCorrect ? 'test_transfer' : 'targeted_intervention'
+        };
+
+        setEvaluation(evalResult);
+
+        // Fallback diagnosis summary
+        setSummary({
+          overallScore: isCorrect ? 80 : 60,
+          evaluatedAttempts: currentIndex + 1,
+          conceptMastery: isCorrect ? 85 : 65,
+          proceduralSkill: 80,
+          reasoningSkill: studentExplanation ? 75 : 55,
+          transferSkill: currentQuestion.type === 'TRANSFER' && isCorrect ? 80 : 40,
+          confidenceCalibration: evalResult.confidenceCalibration === 'well_calibrated' ? 85 : 35,
+          dimensions: {
+            conceptMastery: isCorrect ? 85 : 65,
+            conceptStatus: isCorrect ? 'SOLID' : 'EMERGING',
+            proceduralSkill: 80,
+            proceduralStatus: 'STABLE',
+            reasoningSkill: studentExplanation ? 75 : 55,
+            reasoningStatus: studentExplanation ? 'STRONG' : 'DEVELOPING',
+            transferSkill: currentQuestion.type === 'TRANSFER' && isCorrect ? 80 : 40,
+            transferStatus: currentQuestion.type === 'TRANSFER' && isCorrect ? 'HIGH' : 'LOW',
+            confidenceCalibration: evalResult.confidenceCalibration === 'well_calibrated' ? 85 : 35,
+            calibrationStatus: evalResult.confidenceCalibration
+          },
+          misconceptions: isCorrect ? [] : [
+            {
+              id: 'misc_param_coeff_boundary',
+              name: 'Concept Transfer (a ≠ 0 Constraint)',
+              subtopic: currentQuestion.subtopicTitle || 'Quadratic Equations',
+              severity: 'HIGH',
+              status: 'ACTIVE_GAP',
+              description: 'Treating leading coefficient as constant in parameter problems.',
+              evidence: 'Omitted non-zero constraint during evaluation.'
+            }
+          ],
+          contradictions: [],
+          prerequisiteGaps: isCorrect ? [] : [
+            {
+              prerequisite: 'Polynomial domain restrictions',
+              gradeLevel: 'Grade 9',
+              relatedSubtopic: currentQuestion.subtopicTitle || 'Quadratic Equations',
+              observableSignal: 'Overlooks boundary conditions.',
+              remediationSuggestion: 'Review degree definitions.'
+            }
+          ],
+          recommendedPath: 'review_wrong_answers',
+          recommendedIntervention: {
+            targetSubtopicId: currentQuestion.subtopicId,
+            targetSubtopicTitle: currentQuestion.subtopicTitle || 'Quadratic Equations',
+            focusConcept: 'Concept Transfer (a ≠ 0 in parameter problems)',
+            headline: 'Targeted Concept Reconstruction: Parameter Boundaries',
+            reason: 'Strengthen parameter transfer and boundary conditions.',
+            suggestedAction: 'Complete the interactive studio module.'
+          },
+          biggestLearningSignal: {
+            headline: 'You can solve familiar problems, but struggle when concepts appear with parameters.',
+            detail: 'Your calculation speed is sound, but transfer under unfamiliar parameters needs reinforcement.'
+          },
+          rootCauseAnalysis: {
+            visibleResult: `Transfer = ${currentQuestion.type === 'TRANSFER' && isCorrect ? '80%' : '40%'}`,
+            learningPattern: 'Strong Procedure',
+            likelyRootCause: 'Difficulty translating implicit boundary constraints',
+            prerequisiteGap: 'Grade 9 polynomial domain restrictions'
+          }
         });
+
         setIsSubmitting(false);
         setIsSubmitted(true);
       }, 1500);

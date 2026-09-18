@@ -1,5 +1,6 @@
 import { prisma } from '../repositories/prisma';
 import { getAIProvider } from '../ai/providers';
+import { FullSessionDiagnosis, SessionDiagnosisInput } from '../ai/schemas/diagnosticSchema';
 
 const inMemorySessions = new Map<string, any>();
 
@@ -112,6 +113,23 @@ export interface SubmitAttemptDto {
   confidenceRating: number;
 }
 
+export interface AnalyzeDiagnosisDto {
+  sessionId?: string;
+  topicSlug?: string;
+  selfAssessment?: Record<string, 'KNOW' | 'PARTIAL' | 'DONT_KNOW'>;
+  attempts?: Array<{
+    questionId: string;
+    subtopicTitle?: string;
+    type?: string;
+    prompt?: string;
+    expectedAnswer?: string;
+    studentAnswer: string;
+    studentExplanation?: string;
+    confidenceRating: number;
+    isCorrect?: boolean;
+  }>;
+}
+
 export class DiagnosticService {
   private aiProvider = getAIProvider();
 
@@ -210,7 +228,7 @@ export class DiagnosticService {
       FALLBACK_QUESTIONS.find(q => q.id === dto.questionId) ||
       FALLBACK_QUESTIONS[0];
 
-    // Delegate diagnostic reasoning to AI Provider
+    // 1. Single attempt AI evaluation
     const evaluation = await this.aiProvider.evaluateDiagnosticAttempt({
       questionPrompt: question.prompt,
       expectedAnswer: question.correctAnswer,
@@ -226,6 +244,11 @@ export class DiagnosticService {
       id: `att_${Date.now()}`,
       sessionId: dto.sessionId,
       questionId: dto.questionId,
+      subtopicId: question.subtopicId,
+      subtopicTitle: question.subtopicTitle || 'Quadratic Equations',
+      type: question.type || 'CONCEPT',
+      prompt: question.prompt,
+      expectedAnswer: question.correctAnswer,
       studentAnswer: dto.studentAnswer,
       studentExplanation: dto.studentExplanation || null,
       confidenceRating: dto.confidenceRating,
@@ -238,74 +261,44 @@ export class DiagnosticService {
     if (!session.attempts) session.attempts = [];
     session.attempts.push(attempt);
 
-    // Calculate aggregated diagnostic summary across all attempts
-    const total = session.attempts.length;
-    const correctCount = session.attempts.filter((a: any) => a.isCorrect).length;
-    const score = Math.round((correctCount / total) * 100);
-
-    const allReasoning: string[] = [];
-    const allMisconceptions: string[] = [];
-
-    session.attempts.forEach((att: any) => {
-      if (att.evaluation?.reasoningSignals) {
-        att.evaluation.reasoningSignals.forEach((sig: string) => {
-          if (!allReasoning.includes(sig)) allReasoning.push(sig);
-        });
-      }
-      if (att.evaluation?.misconceptionSignals) {
-        att.evaluation.misconceptionSignals.forEach((sig: string) => {
-          if (!allMisconceptions.includes(sig)) allMisconceptions.push(sig);
-        });
-      }
-    });
-
-    let overallCalibration: 'well_calibrated' | 'overconfident' | 'underconfident' | 'uncertain' = 'well_calibrated';
-    const calibrations = session.attempts.map((a: any) => a.evaluation?.confidenceCalibration).filter(Boolean);
-    if (calibrations.includes('overconfident')) {
-      overallCalibration = 'overconfident';
-    } else if (calibrations.includes('underconfident')) {
-      overallCalibration = 'underconfident';
-    } else if (calibrations.includes('uncertain')) {
-      overallCalibration = 'uncertain';
-    }
-
-    const failedAttempts = session.attempts.filter((a: any) => !a.isCorrect);
-    let primaryRootCause = 'Conceptual and procedural foundations verified across diagnostic attempts.';
-    if (failedAttempts.length > 0) {
-      const lastFailed = failedAttempts[failedAttempts.length - 1];
-      primaryRootCause = lastFailed.evaluation?.rootCause || 'Procedural or conceptual gap identified during multi-signal evaluation.';
-    }
-
-    let recommendedAction = 'advance';
-    if (score < 50 || allMisconceptions.length > 0) {
-      recommendedAction = 'targeted_intervention';
-    } else if (session.attempts.some((a: any) => a.questionId?.includes('transfer') && !a.isCorrect)) {
-      recommendedAction = 'test_transfer';
-    }
-
-    const diagnosisSummary = {
-      overallScore: score,
-      evaluatedAttempts: total,
-      conceptMastery: score >= 80 ? 'SOLID' : score >= 50 ? 'EMERGING' : 'CRITICAL_GAP',
-      proceduralSkill: score >= 60 ? 'STABLE' : 'NEEDS_REINFORCEMENT',
-      reasoning: allReasoning,
-      misconceptions: allMisconceptions,
-      confidenceCalibration: overallCalibration,
-      primaryRootCause,
-      recommendedAction
-    };
-
-    // Mark session COMPLETED if all questions in the set have been answered (and at least 2 attempts)
+    // 2. Mark session COMPLETED if all questions in the set have been answered
     const isCompleted = session.attempts.length >= (session.questions?.length || 5);
     if (isCompleted) {
       session.status = 'COMPLETED';
     }
 
-    session.overallScore = score;
+    // 3. Synthesize Full Session Diagnosis via AI Diagnosis Engine
+    const diagnosisInput: SessionDiagnosisInput = {
+      topicSlug: 'quadratic-equations',
+      topicName: 'Quadratic Equations',
+      grade: 10,
+      board: 'CBSE',
+      selfAssessment: session.selfAssessment || {},
+      attempts: session.attempts.map((a: any) => ({
+        id: a.id,
+        questionId: a.questionId,
+        subtopicId: a.subtopicId,
+        subtopicTitle: a.subtopicTitle || 'Quadratic Equations',
+        type: a.type || 'CONCEPT',
+        prompt: a.prompt || '',
+        expectedAnswer: a.expectedAnswer || '',
+        studentAnswer: a.studentAnswer,
+        studentExplanation: a.studentExplanation || undefined,
+        confidenceRating: a.confidenceRating,
+        isCorrect: a.isCorrect,
+        stepAnalysis: a.evaluation?.stepAnalysis,
+        misconceptionSignals: a.evaluation?.misconceptionSignals,
+        reasoningSignals: a.evaluation?.reasoningSignals
+      }))
+    };
+
+    const diagnosisSummary: FullSessionDiagnosis = await this.aiProvider.generateSessionDiagnosis(diagnosisInput);
+
+    session.overallScore = diagnosisSummary.overallScore;
     session.diagnosisSummary = diagnosisSummary;
     inMemorySessions.set(dto.sessionId, session);
 
-    // Persist attempt to PostgreSQL via Prisma
+    // Persist attempt and updated diagnosis to PostgreSQL via Prisma
     try {
       const dbSession = await prisma.diagnosticSession.findUnique({
         where: { id: dto.sessionId }
@@ -363,7 +356,7 @@ export class DiagnosticService {
           where: { id: dto.sessionId },
           data: {
             status: session.status,
-            overallScore: score,
+            overallScore: diagnosisSummary.overallScore,
             diagnosisSummary: diagnosisSummary as any
           }
         });
@@ -379,4 +372,99 @@ export class DiagnosticService {
       sessionStatus: session.status
     };
   }
+
+  /**
+   * Dedicated Analyze Endpoint implementation for Sprint 5
+   * POST /api/diagnostic/analyze
+   */
+  async analyzeDiagnosis(dto: AnalyzeDiagnosisDto): Promise<FullSessionDiagnosis> {
+    let session: any = null;
+    if (dto.sessionId) {
+      session = await this.getSession(dto.sessionId);
+    }
+
+    const selfAssessment = dto.selfAssessment || session?.selfAssessment || {};
+    let attemptsToAnalyze: any[] = [];
+
+    if (session && session.attempts && session.attempts.length > 0) {
+      attemptsToAnalyze = session.attempts.map((a: any) => {
+        const matchingQ = (session.questions || FALLBACK_QUESTIONS).find((q: any) => q.id === a.questionId) || FALLBACK_QUESTIONS[0];
+        return {
+          questionId: a.questionId,
+          subtopicId: matchingQ.subtopicId,
+          subtopicTitle: matchingQ.subtopicTitle || 'Quadratic Equations',
+          type: matchingQ.type || 'CONCEPT',
+          prompt: matchingQ.prompt || '',
+          expectedAnswer: matchingQ.correctAnswer || '',
+          studentAnswer: a.studentAnswer,
+          studentExplanation: a.studentExplanation || undefined,
+          confidenceRating: a.confidenceRating || 3,
+          isCorrect: a.isCorrect !== undefined ? a.isCorrect : (a.studentAnswer === matchingQ.correctAnswer)
+        };
+      });
+    } else if (dto.attempts && dto.attempts.length > 0) {
+      attemptsToAnalyze = dto.attempts.map(a => {
+        const matchingQ = FALLBACK_QUESTIONS.find(q => q.id === a.questionId) || FALLBACK_QUESTIONS[0];
+        return {
+          questionId: a.questionId,
+          subtopicId: matchingQ.subtopicId,
+          subtopicTitle: a.subtopicTitle || matchingQ.subtopicTitle,
+          type: a.type || matchingQ.type,
+          prompt: a.prompt || matchingQ.prompt,
+          expectedAnswer: a.expectedAnswer || matchingQ.correctAnswer,
+          studentAnswer: a.studentAnswer,
+          studentExplanation: a.studentExplanation,
+          confidenceRating: a.confidenceRating,
+          isCorrect: a.isCorrect !== undefined ? a.isCorrect : (a.studentAnswer === matchingQ.correctAnswer)
+        };
+      });
+    } else {
+      // Demo fallback default
+      attemptsToAnalyze = FALLBACK_QUESTIONS.map((q, idx) => ({
+        questionId: q.id,
+        subtopicId: q.subtopicId,
+        subtopicTitle: q.subtopicTitle,
+        type: q.type,
+        prompt: q.prompt,
+        expectedAnswer: q.correctAnswer,
+        studentAnswer: q.correctAnswer,
+        confidenceRating: 4,
+        isCorrect: idx !== 4 // 1 failure on transfer for realistic demo
+      }));
+    }
+
+    const diagnosisInput: SessionDiagnosisInput = {
+      topicSlug: dto.topicSlug || 'quadratic-equations',
+      topicName: 'Quadratic Equations',
+      grade: 10,
+      board: 'CBSE',
+      selfAssessment,
+      attempts: attemptsToAnalyze
+    };
+
+    const diagnosis = await this.aiProvider.generateSessionDiagnosis(diagnosisInput);
+
+    // If session exists, persist diagnosis
+    if (session && dto.sessionId) {
+      session.diagnosisSummary = diagnosis;
+      session.overallScore = diagnosis.overallScore;
+      inMemorySessions.set(dto.sessionId, session);
+
+      try {
+        await prisma.diagnosticSession.update({
+          where: { id: dto.sessionId },
+          data: {
+            overallScore: diagnosis.overallScore,
+            diagnosisSummary: diagnosis as any
+          }
+        });
+      } catch (err) {
+        console.warn('[DiagnosticService] DB update diagnosisSummary fallback:', err);
+      }
+    }
+
+    return diagnosis;
+  }
 }
+
+export const diagnosticService = new DiagnosticService();

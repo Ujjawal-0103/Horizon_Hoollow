@@ -1,5 +1,11 @@
 import { AIProvider } from './AIProvider';
-import { DiagnosticEvaluationInput, DiagnosticEvaluationResult } from '../schemas/diagnosticSchema';
+import { 
+  DiagnosticEvaluationInput, 
+  DiagnosticEvaluationResult,
+  SessionDiagnosisInput,
+  FullSessionDiagnosis
+} from '../schemas/diagnosticSchema';
+import { diagnosisEngineService } from '../../services/diagnosisEngine';
 
 export class MockAIProvider implements AIProvider {
   name = 'MockAIProvider';
@@ -14,8 +20,6 @@ export class MockAIProvider implements AIProvider {
     const isCorrect = isExactMatch || (cleanStudent.length > 0 && containsCore);
 
     // Confidence calibration analysis
-    // High confidence (4-5) but incorrect -> overconfident
-    // Low confidence (1-2) but correct -> underconfident
     let calibration: 'well_calibrated' | 'overconfident' | 'underconfident' | 'uncertain' = 'well_calibrated';
     if (!isCorrect && input.confidenceRating >= 4) {
       calibration = 'overconfident';
@@ -70,5 +74,9 @@ export class MockAIProvider implements AIProvider {
         : `Procedural gap during algebraic reduction or sign management under ${input.subtopicTitle}.`,
       recommendedAction: isCorrect ? 'test_transfer' : 'targeted_intervention'
     };
+  }
+
+  async generateSessionDiagnosis(input: SessionDiagnosisInput): Promise<FullSessionDiagnosis> {
+    return diagnosisEngineService.synthesizeDeterministicDiagnosis(input);
   }
 }
