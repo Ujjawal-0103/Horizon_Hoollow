@@ -19,7 +19,8 @@ import {
 import { 
   createSessionHandler, 
   getSessionHandler, 
-  submitAttemptHandler 
+  submitAttemptHandler,
+  analyzeDiagnosisHandler
 } from '../controllers/diagnosticController';
 import { 
   saveLearningContextHandler, 
@@ -30,7 +31,7 @@ import {
   getSelfAssessmentHandler, 
   updateSelfAssessmentHandler 
 } from '../controllers/selfAssessmentController';
-import { requireAuth, requireOwnership } from '../middleware/authMiddleware';
+import { requireAuth, requireOwnership, optionalAuth } from '../middleware/authMiddleware';
 import { authRateLimiter } from '../middleware/securityMiddleware';
 
 const apiRouter = Router();
@@ -40,8 +41,8 @@ apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     system: 'MindTrace AI Learning Diagnostic Engine',
-    version: '0.3.0',
-    sprint: 3,
+    version: '0.5.0',
+    sprint: 5,
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
@@ -57,7 +58,7 @@ apiRouter.get('/auth/me', requireAuth, getMeHandler);
 apiRouter.delete('/account', requireAuth, deleteAccountHandler);
 
 // Profile Endpoints with strict Ownership (Sections 8, 11)
-apiRouter.post('/profile', createProfileHandler); // Initial profile or signup
+apiRouter.post('/profile', createProfileHandler);
 apiRouter.get('/profile/me', requireAuth, getProfileHandler);
 apiRouter.put('/profile/me', requireAuth, updateProfileHandler);
 apiRouter.get('/profile/:userId', requireAuth, requireOwnership('userId'), getProfileHandler);
@@ -82,5 +83,8 @@ apiRouter.put('/self-assessment/:id', requireAuth, updateSelfAssessmentHandler);
 apiRouter.post('/diagnostic/session', requireAuth, createSessionHandler);
 apiRouter.get('/diagnostic/session/:sessionId', requireAuth, getSessionHandler);
 apiRouter.post('/diagnostic/session/:sessionId/submit', requireAuth, submitAttemptHandler);
+
+// Sprint 5: AI Diagnosis Engine Analyze Route
+apiRouter.post('/diagnostic/analyze', optionalAuth, analyzeDiagnosisHandler);
 
 export { apiRouter };
